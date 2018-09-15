@@ -1,4 +1,5 @@
 import csv
+from django.contrib import messages
 from django.shortcuts import render, redirect
 
 from twilio.rest import Client
@@ -38,6 +39,7 @@ def home_view(request):
             customers_cellphones = get_customers_cellphones(request.FILES['file'])
             message_body = form.cleaned_data.get('message')
             print(send_message_to_customers(customers_cellphones, message_body))
+            messages.success(request, 'Message sent!')
             return redirect('send_sms:home')
     else:
         form = MessageForm()

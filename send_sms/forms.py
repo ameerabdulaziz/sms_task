@@ -2,10 +2,12 @@ from django import forms
 
 
 class MessageForm(forms.Form):
-    file = forms.FileField(label='Select a file', required=False)
+    file = forms.FileField(label='Upload a CSV file', widget=forms.FileInput(attrs={
+        'class': 'form-control',
+    }))
     message = forms.CharField(widget=forms.Textarea(attrs={
-        "rows": 30,
-        'cols': 120,
+        'class': 'form-control',
+        'placeholder': 'Message',
     }))
 
     def clean_file(self):
