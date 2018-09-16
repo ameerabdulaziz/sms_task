@@ -21,26 +21,30 @@ def get_customers_info(csv_file):
 
 def send_message_to_customers(phones, message_body):
     message_sids = []
+    message_statuses = []
+    message_dates = []
+    account_sid = 'AC4b174ed56fd13054ac1ff1172df80083'
+    auth_token = 'a10edaf2835481d9b825ff10a8ec3776'
+    client = Client(account_sid, auth_token)
     for phone in phones:
-        account_sid = 'AC4b174ed56fd13054ac1ff1172df80083'
-        auth_token = 'a10edaf2835481d9b825ff10a8ec3776'
-        client = Client(account_sid, auth_token)
         message = client.messages.create(
             from_='+18508057647',
             body=message_body,
             to=phone
         )
         message_sids.append(message.sid)
-    return message_sids
+        message_statuses.append(client.messages(message.sid).fetch().status)
+        message_dates.append(client.messages(message.sid).fetch().date_sent.strftime("%Y-%m-%d %H:%M:%S"))
+    return message_sids, message_statuses, message_dates
 
 
-def save_message_detail(names, phones, message, sids):
+def save_message_detail(names, phones, message, sids, statuses, dates):
     with open('message_detail.csv', 'w') as csv_file:
         csv_writer = csv.writer(csv_file)
         headers = ['Name', 'Cellphone number', 'Message', 'Message_sid', 'Status', 'Sent_date-time']
         csv_writer.writerow(headers)
-        for name, phone, sid in zip(names, phones, sids):
-            csv_writer.writerow([name, phone, message, sid])
+        for name, phone, sid, status, date in zip(names, phones, sids, statuses, dates):
+            csv_writer.writerow([name, phone, message, sid, status, date])
 
 
 def home_view(request):
@@ -49,8 +53,8 @@ def home_view(request):
         if form.is_valid():
             customers_names, customers_cellphones = get_customers_info(request.FILES['file'])
             message_body = form.cleaned_data.get('message')
-            sids = send_message_to_customers(customers_cellphones, message_body)
-            save_message_detail(customers_names, customers_cellphones, message_body, sids)
+            sids, statuses, dates = send_message_to_customers(customers_cellphones, message_body)
+            save_message_detail(customers_names, customers_cellphones, message_body, sids, statuses, dates)
             messages.success(request, 'Message sent!')
             return redirect('send_sms:home')
     else:
